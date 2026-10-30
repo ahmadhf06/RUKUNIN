@@ -1,0 +1,34 @@
+{% from "_m.html" import csrf, inp, sel, icon %}<!doctype html><html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Daftar Warga · RUKUNIN</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script></head><body>
+<div class="auth"><div class="hero"><div class="brand"><span class="logo">{{ icon('home') }}</span>RUKUNIN</div>
+<p style="color:#fff;font-weight:600;margin-top:-6px">Ruang Komunitas, Urusan dan Keamanan INtegratif</p>
+<h1>Pendaftaran Warga</h1>
+<p>Buat akun dan lengkapi data diri Anda. Data akan langsung diterima Ketua RT sebagai data warga, tanpa perlu diinput ulang secara manual.</p></div>
+<div class="box" style="max-width:640px"><h2 style="font-size:1.5rem;margin-bottom:6px">Daftar akun warga</h2><p class="muted">{{ cfg.get('nama_rt','') }}</p>
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for c, m in msgs %}<div class="flash {{ c }}">{{ m }}</div>{% endfor %}{% endwith %}
+<form method="post" autocomplete="on">{{ csrf() }}
+<h3 style="margin:14px 0 6px;font-size:1rem">Data akun</h3>
+<div class="fg">
+{{ inp('username','Username (huruf, angka, _ atau .)',v.username,extra='minlength="3" maxlength="30" pattern="[A-Za-z0-9_.]{3,30}" autocomplete="username" autofocus') }}
+<span></span>
+{{ inp('password','Kata sandi (min. 8, huruf + angka)','','password',extra='minlength="8" autocomplete="new-password"') }}
+{{ inp('konfirmasi','Ulangi kata sandi','','password',extra='autocomplete="new-password"') }}
+</div>
+<h3 style="margin:14px 0 6px;font-size:1rem">Data diri</h3>
+<div class="fg">
+{{ inp('nama','Nama lengkap',v.nama,extra='maxlength="100" autocomplete="name"') }}
+{{ inp('nik','NIK (16 digit)',v.nik,extra='pattern="\d{16}" maxlength="16" inputmode="numeric"') }}
+{{ inp('kk','No. KK (16 digit)',v.kk,req=false,extra='pattern="\d{16}" maxlength="16" inputmode="numeric"') }}
+{{ sel('jk','Jenis kelamin',[('L','Laki-laki'),('P','Perempuan')],v.jk,blank='Pilih...') }}
+{{ inp('tempat_lahir','Tempat lahir',v.tempat_lahir,req=false) }}
+{{ inp('tgl_lahir','Tanggal lahir',v.tgl_lahir,'date',false) }}
+{{ inp('alamat','Alamat (blok / jalan / nomor rumah)',v.alamat,extra='maxlength="150"') }}
+{{ inp('telepon','No. telepon / WhatsApp',v.telepon,'tel',extra='pattern="[0-9+\- ]{8,20}" maxlength="20" inputmode="tel" autocomplete="tel"') }}
+{{ inp('pekerjaan','Pekerjaan',v.pekerjaan,req=false) }}
+{{ sel('status_tinggal','Status tinggal',['Tetap','Kontrak','Kos'],v.status_tinggal or 'Tetap') }}
+</div>
+<button class="btn" style="width:100%;justify-content:center;margin-top:10px">Daftar</button></form>
+<p class="muted small" style="margin-top:18px;text-align:center">Sudah punya akun? <a href="{{ url_for('main.login') }}"><b>Masuk</b></a></p>
+</div></div></body></html>

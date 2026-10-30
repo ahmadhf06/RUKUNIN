@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% from "_m.html" import csrf, inp, sel, area %}{% block title %}Buat Laporan{% endblock %}
+{% block content %}<div class="card" style="max-width:720px"><form method="post" enctype="multipart/form-data">{{ csrf() }}
+{{ inp('judul','Judul laporan',extra='maxlength="120"') }}{{ sel('kategori','Kategori',kategori) }}{{ area('deskripsi','Deskripsi masalah',rows=5) }}
+{{ inp('lokasi','Lokasi (alamat / patokan)',extra='maxlength="150"') }}
+<input type="hidden" name="lat" id="lat"><input type="hidden" name="lng" id="lng">
+<p><button type="button" class="btn out sm" data-geo>Gunakan lokasi GPS saya</button></p>
+<label class="f"><span>Foto (JPG/PNG/WEBP, maks 5 MB)</span><input type="file" name="foto" accept="image/jpeg,image/png,image/webp" capture="environment"></label>
+<button class="btn">Kirim laporan</button></form></div>{% endblock %}

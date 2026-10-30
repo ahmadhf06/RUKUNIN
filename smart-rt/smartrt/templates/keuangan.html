@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% from "_m.html" import csrf, inp, sel, bars %}{% block title %}Keuangan RT{% endblock %}
+{% block content %}
+<div class="grid g4" style="margin-bottom:18px"><div class="stat"><div><b>{{ saldo|rupiah }}</b><span>Saldo kas</span></div></div><div class="stat"><div><b>{{ masuk|rupiah }}</b><span>Total pemasukan</span></div></div><div class="stat"><div><b>{{ keluar|rupiah }}</b><span>Total pengeluaran</span></div></div></div>
+<div class="grid g2"><div class="card"><h2>Pemasukan 6 bulan</h2>{{ bars(chart_masuk, true) }}</div><div class="card"><h2>Pengeluaran 6 bulan</h2>{{ bars(chart_keluar, true) }}</div></div>
+{% if user.role == 'bendahara' %}<details class="card"><summary>+ Catat transaksi</summary><form method="post" action="{{ url_for('keuangan.transaksi_add') }}">{{ csrf() }}<div class="fg">
+{{ sel('tipe','Jenis',[('pemasukan','Pemasukan'),('pengeluaran','Pengeluaran')]) }}{{ sel('kategori','Kategori',kat_masuk + kat_keluar) }}
+{{ inp('nominal','Nominal (Rp)','','number',extra='min="1"') }}{{ inp('tanggal','Tanggal',hari_ini,'date') }}</div>{{ inp('keterangan','Keterangan',extra='maxlength="200"') }}
+<p class="muted small">Kategori pemasukan: {{ kat_masuk|join(', ') }}. Kategori pengeluaran: {{ kat_keluar|join(', ') }}. Pengeluaran tidak boleh melebihi saldo.</p><button class="btn">Simpan</button></form></details>{% endif %}
+<div class="card"><div class="row sb" style="margin-bottom:12px"><form method="get" class="row"><input type="month" name="bulan" value="{{ bulan }}" style="width:170px"><select name="tipe" style="width:160px"><option value="">Semua jenis</option><option value="pemasukan" {{ 'selected' if tipe=='pemasukan' }}>Pemasukan</option><option value="pengeluaran" {{ 'selected' if tipe=='pengeluaran' }}>Pengeluaran</option></select><button class="btn out">Filter</button></form>
+<a class="btn out" href="{{ url_for('keuangan.export', bulan=bulan, tipe=tipe) }}">Unduh CSV</a></div>
+<div class="tw"><table><tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Keterangan</th><th class="r">Nominal</th><th>Dicatat oleh</th></tr>
+{% for t in rows %}<tr><td>{{ t.tanggal|tgl }}</td><td><span class="badge {{ 'b-emerald' if t.tipe=='pemasukan' else 'b-red' }}">{{ t.tipe|capitalize }}</span></td><td>{{ t.kategori }}</td><td>{{ t.keterangan }}</td><td class="r">{{ t.nominal|rupiah }}</td><td class="small">{{ t.oleh or '-' }}</td></tr>{% else %}<tr><td colspan="6" class="muted">Belum ada transaksi.</td></tr>{% endfor %}</table></div></div>{% endblock %}

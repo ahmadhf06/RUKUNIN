@@ -1,0 +1,9 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><title>{{ s.jenis }} {{ s.nomor }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}"><script src="{{ url_for('static', filename='js/app.js') }}" defer></script></head><body>
+<div class="noprint" style="text-align:center;padding:12px"><button class="btn" data-print>Cetak / Simpan PDF</button></div>
+<div class="paper">{% if s.status == 'menunggu_ketua' %}<div class="wm">DRAF – BELUM DISETUJUI</div>{% endif %}
+<div class="kop"><b style="font-size:1.2rem">PENGURUS {{ cfg.get('nama_rt','RT')|upper }}</b><br>Kelurahan {{ cfg.get('kelurahan','') }}, Kecamatan {{ cfg.get('kecamatan','') }}, {{ cfg.get('kota','') }}<br><small>{{ cfg.get('alamat_sekretariat','') }}</small></div>
+<div style="text-align:center"><b><u>{{ s.jenis|upper }}</u></b><br>Nomor: {{ s.nomor }}</div><br>
+<div style="white-space:pre-wrap">{{ s.draf }}</div><br><br>
+<div style="margin-left:55%;text-align:center">{{ cfg.get('kota','') }}, {{ (setuju.created_at if setuju else s.updated_at)|tgl }}<br>Ketua {{ cfg.get('nama_rt','RT') }}<br><br>
+{% if setuju %}<small><i>Disetujui secara digital melalui Smart RT</i></small>{% else %}<br>{% endif %}<br><b><u>{{ ketua }}</u></b></div></div></body></html>

@@ -1,0 +1,3 @@
+{% extends "base.html" %}{% from "_m.html" import csrf %}{% block title %}Notifikasi{% endblock %}
+{% block content %}<div class="card"><div class="row sb"><h2>Semua notifikasi</h2><form method="post" action="{{ url_for('main.notifikasi_baca_semua') }}">{{ csrf() }}<button class="btn out sm">Tandai semua dibaca</button></form></div>
+{% for n in rows %}<p style="margin:10px 0;{% if not n.dibaca %}font-weight:600{% endif %}"><a href="{{ url_for('main.notifikasi_buka', nid=n.id) }}">{{ n.judul }}</a> {% if not n.dibaca %}<span class="badge b-blue">Baru</span>{% endif %}<br><span class="muted small">{{ n.created_at|tgl(true) }} — {{ n.pesan }}</span></p>{% else %}<p class="muted">Belum ada notifikasi.</p>{% endfor %}</div>{% endblock %}

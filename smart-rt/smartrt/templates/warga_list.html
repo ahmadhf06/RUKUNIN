@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}Data Warga{% endblock %}
+{% block content %}<div class="card"><div class="row sb" style="margin-bottom:12px"><form method="get" class="row"><input name="q" value="{{ cari }}" placeholder="Cari nama / NIK / alamat" style="width:260px"><button class="btn out">Cari</button></form>
+{% if user.role == 'ketua' %}<a class="btn" href="{{ url_for('warga.baru') }}">+ Tambah warga</a>{% endif %}</div>
+<div class="tw"><table><tr><th>Nama</th><th>NIK</th><th>Alamat</th><th>Telepon</th><th>Tinggal</th><th>Akun</th><th>Status</th>{% if user.role == 'ketua' %}<th></th>{% endif %}</tr>
+{% for w in rows %}<tr><td>{{ w.nama }}</td><td class="small">{{ w.nik or '-' }}</td><td>{{ w.alamat or '-' }}</td><td>{{ w.telepon or '-' }}</td><td>{{ w.status_tinggal }}</td><td>{{ w.username or '-' }}</td><td>{% if w.aktif %}<span class="badge b-emerald">Aktif</span>{% else %}<span class="badge b-gray">Nonaktif</span>{% endif %}</td>{% if user.role == 'ketua' %}<td><a href="{{ url_for('warga.edit', wid=w.id) }}">Ubah</a></td>{% endif %}</tr>{% else %}<tr><td colspan="8" class="muted">Tidak ada data.</td></tr>{% endfor %}</table></div>
+<p class="muted small">{{ rows|length }} data ditampilkan.</p></div>{% endblock %}

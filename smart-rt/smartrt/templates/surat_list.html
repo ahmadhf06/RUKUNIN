@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% from "_m.html" import badge %}{% block title %}Surat{% endblock %}
+{% block content %}<div class="card"><div class="row sb" style="margin-bottom:12px"><div class="chips row"><a href="{{ url_for('surat.index') }}" class="{{ 'on' if not status }}">Semua</a>
+{% for k, (l, c) in STATUS.surat.items() %}<a href="{{ url_for('surat.index', status=k) }}" class="{{ 'on' if status == k }}">{{ l }}</a>{% endfor %}</div>
+{% if user.role == 'warga' %}<a class="btn" href="{{ url_for('surat.baru') }}">+ Ajukan surat</a>{% endif %}</div>
+<div class="tw"><table><tr><th>#</th><th>Jenis</th>{% if user.role != 'warga' %}<th>Pemohon</th>{% endif %}<th>Keperluan</th><th>Nomor</th><th>Tanggal</th><th>Status</th><th></th></tr>
+{% for s in rows %}<tr><td>{{ s.id }}</td><td>{{ s.jenis }}</td>{% if user.role != 'warga' %}<td>{{ s.nama }}</td>{% endif %}<td>{{ s.keperluan }}</td><td class="small">{{ s.nomor or '-' }}</td><td class="small">{{ s.created_at|tgl }}</td><td>{{ badge('surat', s.status) }}</td><td><a href="{{ url_for('surat.detail', sid=s.id) }}">Buka</a></td></tr>{% else %}<tr><td colspan="8" class="muted">Belum ada surat.</td></tr>{% endfor %}</table></div></div>{% endblock %}

@@ -1,0 +1,16 @@
+{% from "_m.html" import csrf, icon %}<!doctype html><html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Masuk · RUKUNIN</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script></head><body>
+<div class="auth"><div class="hero"><div class="brand"><span class="logo">{{ icon('home') }}</span>RUKUNIN</div>
+<p style="color:#fff;font-weight:600;margin-top:-6px">Ruang Komunitas, Urusan dan Keamanan INtegratif</p>
+<h1>Sistem Informasi Manajemen Lingkungan Digital</h1>
+<p>Surat, laporan, iuran, pengumuman, voting, dan presensi warga — satu sistem terpusat yang dapat diakses dari HP maupun komputer.</p></div>
+<div class="box"><h2 style="font-size:1.5rem;margin-bottom:6px">Masuk</h2><p class="muted">{{ cfg.get('nama_rt','') }}</p>
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for c, m in msgs %}<div class="flash {{ c }}">{{ m }}</div>{% endfor %}{% endwith %}
+<form method="post" autocomplete="on">{{ csrf() }}
+<label class="f"><span>Username</span><input name="username" id="username" required autofocus autocomplete="username"></label>
+<label class="f"><span>Kata sandi</span><input type="password" name="password" id="password" required autocomplete="current-password"></label>
+<button class="btn" style="width:100%;justify-content:center">Masuk</button></form>
+<p class="muted small" style="margin-top:22px;text-align:center">Belum punya akun? <a href="{{ url_for('main.daftar') }}"><b>Daftar sebagai warga</b></a></p>
+</div></div></body></html>

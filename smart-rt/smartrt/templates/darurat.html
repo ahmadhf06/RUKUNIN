@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% from "_m.html" import icon, csrf %}
+{% block title %}Alarm Darurat{% endblock %}
+{% block content %}
+<style>
+/* ===== Alarm Darurat – gaya halaman ===== */
+.alarm-aktif-banner{background:#dc2626;color:#fff;border-radius:14px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;animation:pulse-bg 1.5s infinite}
+@keyframes pulse-bg{0%,100%{background:#dc2626}50%{background:#b91c1c}}
+.alarm-aktif-banner .ab-icon{font-size:2rem;flex:none}
+.alarm-aktif-banner h2{margin:0;font-size:1.2rem}
+.alarm-aktif-banner small{opacity:.9;font-size:.85rem}
+
+/* Tiga kartu tombol alarm */
+.jn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:14px}
+.jn-card{border:1px solid var(--bd);border-top:5px solid var(--c);border-radius:16px;padding:18px;background:#fff;display:flex;flex-direction:column;gap:12px}
+.jn-head{display:flex;align-items:center;gap:12px}
+.jn-ikon{font-size:2.1rem;line-height:1;flex:none}
+.jn-head h3{margin:0;font-size:1.1rem}
+.jn-info{margin:0;font-size:.85rem;color:var(--mut);min-height:2.6em}
+.jn-btn{width:100%;border:0;border-radius:12px;padding:15px;background:var(--c);color:#fff;font-weight:700;font-size:1rem;cursor:pointer;font-family:inherit}
+.jn-btn:hover:not(:disabled){filter:brightness(.92)}
+.jn-btn:disabled{opacity:.4;cursor:not-allowed}
+.jn-siren{border-top:1px dashed var(--bd);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.jn-siren .row{gap:8px}
+.jn-siren input[type=file]{max-width:100%;font-size:.8rem}
+.jn-siren audio{width:100%}
+
+/* Looping indicator */
+.loop-info{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--em-xl);border-radius:11px;font-size:.88rem}
+.loop-spin{width:18px;height:18px;border:3px solid var(--em);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Log tabel */
+.alarm-log{margin-top:28px}
+</style>
+
+{# ========================================================= Banner alarm aktif #}
+{% if alarm %}
+<div class="alarm-aktif-banner" id="bannerAktif">
+  <span class="ab-icon">🚨</span>
+  <div>
+    <h2>ALARM AKTIF: {{ alarm.jenis }}</h2>
+    <small>Sejak {{ alarm.diaktifkan_pada }} &nbsp;|&nbsp; {{ alarm.pesan or 'Tidak ada keterangan tambahan.' }}</small>
+  </div>
+</div>
+
+<div class="card" id="panelLoop">
+  <div class="loop-info">
+    <div class="loop-spin"></div>
+    <span>Alarm sedang berjalan — sirene <b>{{ alarm.jenis }}</b> diputar berulang. Jika tidak terdengar, klik di mana saja pada halaman ini.</span>
+  </div>
+  <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn out" id="btnMuteLoop" type="button">🔇 Matikan suara di perangkat ini</button>
+    {% if u.role == 'ketua' %}
+    <button class="btn red" id="btnStopAlarm" type="button">🛑 Matikan Alarm</button>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{# ========================================================= Tombol alarm #}
+<div class="card">
+  <h2>{{ icon('siren') }} Tombol Alarm Darurat</h2>
+  {% if u.role == 'ketua' %}
+  <p class="small muted" style="margin:4px 0 12px">Tekan salah satu tombol untuk membunyikan sirene dan mengirim notifikasi ke seluruh warga. Hanya satu alarm yang bisa aktif dalam satu waktu.</p>
+  <div class="f">
+    <span>Keterangan tambahan (opsional)</span>
+    <textarea id="inputPesan" rows="2" maxlength="500" placeholder="Contoh: lokasi kejadian, arah evakuasi, atau instruksi lain. Jika kosong, dipakai pesan standar."></textarea>
+  </div>
+  {% elif u.role != 'admin' %}
+  <p class="small muted" style="margin:4px 0 0">Alarm hanya dapat diaktifkan oleh Ketua RT. Jika terjadi keadaan darurat, segera hubungi Ketua RT.</p>
+  {% endif %}
+
+  <div class="jn-grid">
+    {% for j in jenis_list %}
+    <div class="jn-card" style="--c:{{ j.warna }}">
+      <div class="jn-head">
+        <span class="jn-ikon">{{ j.ikon }}</span>
+        <div>
+          <h3>{{ j.label }}</h3>
+          {% if j.siren_ada %}<span class="badge b-emerald">✔ Sirene tersedia</span>
+          {% else %}<span class="badge b-amber">⚠ Sirene belum diunggah</span>{% endif %}
+        </div>
+      </div>
+      <p class="jn-info">{{ j.info }}</p>
+
+      {% if u.role == 'ketua' %}
+      <button class="jn-btn" type="button" data-alarm="{{ j.kode }}" data-label="{{ j.label }}" data-siren="{{ 1 if j.siren_ada else 0 }}"{% if alarm %} disabled{% endif %}>{{ j.ikon }} Aktifkan Alarm {{ j.label }}</button>
+      {% endif %}
+
+      {% if u.role in ('ketua', 'admin') %}
+      <div class="jn-siren">
+        <span class="small"><b>Sirene {{ j.label }}</b> — format MP3 (WAV/OGG/M4A juga bisa), maks. 5 MB</span>
+        <form class="form-sirene row" data-kode="{{ j.kode }}">
+          <input type="file" accept=".mp3,.wav,.ogg,.webm,.m4a,audio/mpeg,audio/wav,audio/ogg,audio/webm,audio/mp4,audio/x-m4a">
+          <button class="btn out sm" type="submit">⬆ Unggah MP3</button>
+          <span class="small muted status"></span>
+        </form>
+        {% if j.siren_ada %}
+        <audio controls preload="none" src="{{ url_for('darurat.serve_sirene', kode=j.kode) }}"></audio>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% if alarm and u.role == 'ketua' %}
+  <p class="flash error" style="margin-top:14px">Alarm sedang aktif. Hentikan alarm saat ini sebelum mengaktifkan yang baru.</p>
+  {% endif %}
+</div>
+
+{# ========================================================= Log Alarm #}
+<div class="alarm-log card">
+  <h2>{{ icon('list') }} Riwayat Alarm</h2>
+  {% if logs %}
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Jenis</th><th>Pesan</th>
+        <th>Diaktifkan oleh</th><th>Waktu Aktif</th>
+        <th>Dihentikan oleh</th><th>Waktu Selesai</th>
+        <th>Status</th>
+      </tr></thead>
+      <tbody>
+      {% for r in logs %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td><b>{{ r.jenis }}</b></td>
+        <td class="muted">{{ r.pesan or '-' }}</td>
+        <td>{{ r.aktivator or '-' }}</td>
+        <td>{{ r.diaktifkan_pada|tgl(jam=true) }}</td>
+        <td>{{ r.penghenti or '-' }}</td>
+        <td>{{ r.dihentikan_pada|tgl(jam=true) if r.dihentikan_pada else '-' }}</td>
+        <td>
+          {% if r.status == 'aktif' %}
+          <span class="badge b-red">Aktif</span>
+          {% else %}
+          <span class="badge b-emerald">Selesai</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted small">Belum ada riwayat alarm.</p>
+  {% endif %}
+</div>
+
+{# ========================================================= JavaScript #}
+<script>
+(function () {
+  'use strict';
+
+  var CSRF = {{ csrf_token()|tojson }};
+  var ALARM_KODE = {{ (alarm_kode or '')|tojson }};
+  var loopActive = ALARM_KODE !== '';
+  var loopMuted = false, aud = null;
+
+  function apiPost(url, body) {
+    return fetch(url, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': CSRF, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) { return r.json(); });
+  }
+
+  /* ===================================================== AKTIFKAN ALARM ===== */
+  Array.prototype.forEach.call(document.querySelectorAll('[data-alarm]'), function (btn) {
+    btn.addEventListener('click', function () {
+      var kode = btn.getAttribute('data-alarm');
+      var label = btn.getAttribute('data-label');
+      var adaSirene = btn.getAttribute('data-siren') === '1';
+      var pesanEl = document.getElementById('inputPesan');
+      var pesan = pesanEl ? pesanEl.value.trim() : '';
+      var tanya = 'Aktifkan alarm "' + label + '"? Semua warga akan menerima notifikasi.';
+      if (!adaSirene) tanya += '\n\nPerhatian: sirene untuk tombol ini belum diunggah, jadi alarm hanya berupa notifikasi tanpa suara.';
+      if (!confirm(tanya)) return;
+
+      var semua = document.querySelectorAll('[data-alarm]');
+      Array.prototype.forEach.call(semua, function (b) { b.disabled = true; });
+      var teks = btn.textContent;
+      btn.textContent = 'Mengaktifkan…';
+
+      apiPost('/api/darurat/aktifkan', { kode: kode, pesan: pesan }).then(function (j) {
+        if (j.ok) {
+          location.reload();
+        } else {
+          alert('Gagal: ' + (j.pesan || 'Terjadi kesalahan.'));
+          Array.prototype.forEach.call(semua, function (b) { b.disabled = false; });
+          btn.textContent = teks;
+        }
+      }).catch(function () {
+        alert('Koneksi gagal.');
+        Array.prototype.forEach.call(semua, function (b) { b.disabled = false; });
+        btn.textContent = teks;
+      });
+    });
+  });
+
+  /* ===================================================== STOP ALARM ===== */
+  var btnStop = document.getElementById('btnStopAlarm');
+  if (btnStop) btnStop.addEventListener('click', function () {
+    if (!confirm('Yakin ingin menghentikan alarm darurat?')) return;
+    btnStop.disabled = true; btnStop.textContent = 'Menghentikan…';
+    apiPost('/api/darurat/stop').then(function (j) {
+      if (j.ok) { stopLoop(); location.reload(); }
+      else {
+        alert('Gagal: ' + (j.pesan || 'Terjadi kesalahan.'));
+        btnStop.disabled = false; btnStop.textContent = '🛑 Matikan Alarm';
+      }
+    }).catch(function () {
+      alert('Koneksi gagal.');
+      btnStop.disabled = false; btnStop.textContent = '🛑 Matikan Alarm';
+    });
+  });
+
+  /* ===================================================== SIRENE BERULANG ===== */
+  function startLoop() {
+    if (!loopActive || loopMuted) return;
+    if (!aud) {
+      aud = new Audio('/api/darurat/sirene/' + encodeURIComponent(ALARM_KODE));
+      aud.loop = true;
+      aud.preload = 'auto';
+    }
+    var p = aud.play();
+    if (p && p.catch) p.catch(function () { /* diblokir autoplay / sirene belum ada */ });
+  }
+  function stopLoop() {
+    loopActive = false;
+    if (aud) { aud.pause(); aud = null; }
+  }
+
+  var btnMute = document.getElementById('btnMuteLoop');
+  if (btnMute) btnMute.addEventListener('click', function () {
+    if (loopMuted) {
+      loopMuted = false;
+      btnMute.textContent = '🔇 Matikan suara di perangkat ini';
+      startLoop();
+    } else {
+      loopMuted = true;
+      btnMute.textContent = '🔊 Hidupkan kembali suara';
+      if (aud) aud.pause();
+    }
+  });
+
+  if (loopActive) {
+    startLoop();                                       // berhasil bila browser mengizinkan autoplay
+    document.addEventListener('click', function () {   // jika diblokir, mulai pada klik pertama
+      if (aud && aud.paused) startLoop();
+    }, { once: true });
+  }
+
+  /* ===================================================== UNGGAH SIRENE ===== */
+  Array.prototype.forEach.call(document.querySelectorAll('.form-sirene'), function (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var kode = form.getAttribute('data-kode');
+      var file = form.querySelector('input[type=file]').files[0];
+      var status = form.querySelector('.status');
+      if (!file) { alert('Pilih file MP3 terlebih dahulu.'); return; }
+      if (file.size > 5 * 1024 * 1024) { alert('Ukuran file maksimal 5 MB.'); return; }
+      status.textContent = 'Mengunggah…';
+      var fd = new FormData();
+      fd.append('sirene', file);
+      fetch('/api/darurat/upload-sirene/' + encodeURIComponent(kode), {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': CSRF }, body: fd
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        status.textContent = j.ok ? '✔ Berhasil diunggah.' : '❌ ' + (j.pesan || 'Gagal.');
+        if (j.ok) setTimeout(function () { location.reload(); }, 900);
+      }).catch(function () { status.textContent = '❌ Gagal mengunggah.'; });
+    });
+  });
+
+  /* ===================================================== POLLING STATUS ===== */
+  // Sinkronisasi multi-perangkat: bila status alarm berubah dari perangkat lain, muat ulang halaman.
+  function pollStatus() {
+    fetch('/api/darurat/status', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var banner = document.getElementById('bannerAktif');
+        if ((j.aktif && !banner) || (!j.aktif && banner)) location.reload();
+      }).catch(function () {});
+  }
+  if (document.querySelector('.sidebar')) setInterval(pollStatus, 10000);
+
+})();
+</script>
+{% endblock %}

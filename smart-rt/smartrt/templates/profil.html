@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% from "_m.html" import csrf, inp %}{% block title %}Profil{% endblock %}
+{% block content %}<div class="grid g2">
+<div class="card"><h2>Data akun</h2><form method="post">{{ csrf() }}<input type="hidden" name="aksi" value="info">
+<p class="muted small">Username: <b>{{ user.username }}</b> · Peran: <b>{{ ROLES[user.role] }}</b></p>
+{{ inp('nama','Nama',user.nama) }}
+{% if w %}{{ inp('telepon','Telepon',w.telepon,req=false) }}<p class="muted small">NIK: {{ w.nik or '-' }} · Alamat: {{ w.alamat or '-' }}<br>Perubahan data kependudukan dilakukan oleh Ketua RT.</p>{% endif %}
+<button class="btn">Simpan</button></form></div>
+<div class="card"><h2>Ganti kata sandi</h2><form method="post">{{ csrf() }}<input type="hidden" name="aksi" value="password">
+{{ inp('lama','Kata sandi lama','','password',extra='autocomplete="current-password"') }}{{ inp('baru','Kata sandi baru (min. 8, huruf + angka)','','password',extra='minlength="8" autocomplete="new-password"') }}{{ inp('konfirmasi','Ulangi kata sandi baru','','password',extra='autocomplete="new-password"') }}
+<button class="btn">Ganti</button></form></div></div>{% endblock %}

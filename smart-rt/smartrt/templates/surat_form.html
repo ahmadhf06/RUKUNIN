@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% from "_m.html" import csrf, sel, inp, area %}{% block title %}Ajukan Surat{% endblock %}
+{% block content %}<div class="card" style="max-width:720px"><form method="post">{{ csrf() }}
+{{ sel('jenis','Jenis surat',jenis) }}{{ inp('keperluan','Keperluan',ph='mis. pengurusan KTP baru',extra='maxlength="200"') }}{{ area('keterangan','Keterangan tambahan',req=false,rows=3,max=500) }}
+<p class="muted small">Alur: Anda → Sekretaris memeriksa → Ketua RT menyetujui → Surat selesai. Anda akan menerima notifikasi di setiap tahap.</p>
+<button class="btn">Kirim pengajuan</button></form></div>{% endblock %}
